@@ -1,23 +1,34 @@
 import express from 'express';
-import { router } from './routers/index';
-import { errorHandler } from './middlewares/error-handler.middleware';
-import { prisma } from './utils/prisma.util';
+import dotenv from 'dotenv';
+
+import { connectPrisma } from './utils/prisma.util.js';
+import { router as usersRouter } from './routers/users.router.js';
+import { router as resumeRouter } from './routers/resumes.router.js';
+import { errorMiddleware } from './middlewares/error-handler.middleware.js';
+import { logMiddleware } from './middlewares/log.middleware.js';
+
+dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
+
+app.set('port', PORT || 3100);
 
 app.use(express.json());
-app.use(router);
+app.use(express.urlencoded({ extended: true }));
 
-// Middleware to handle errors
-app.use(errorHandler);
+app.use('/', usersRouter);
+app.use('/resume', resumeRouter);
 
-app.listen(PORT, async () => {
-  try {
-    await prisma.$connect();
-    console.log('DB 연결에 성공했습니다.');
-    console.log(`Server is running on port ${PORT}`);
-  } catch (error) {
-    console.error('DB 연결에 실패했습니다.', error);
-  }
+app.use(logMiddleware);
+app.use(errorMiddleware);
+
+app.get('/', (req, res) => {
+  res.send('Hello world!!');
+});
+
+connectPrisma();
+
+app.listen(PORT, () => {
+  console.log(`App is running at http://localhost:${PORT}`);
 });
