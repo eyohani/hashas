@@ -1,34 +1,28 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-
-import { connectPrisma } from './utils/prisma.util.js';
-import { router as usersRouter } from './routers/users.router.js';
-import { router as resumeRouter } from './routers/resumes.router.js';
-import { errorMiddleware } from './middlewares/error-handler.middleware.js';
-import { logMiddleware } from './middlewares/log.middleware.js';
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000;
 
-app.set('port', PORT || 3100);
+// MongoDB connection
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+  .then(() => console.log('MongoDB connected'))
+  .catch((err) => console.error(err));
 
+// Middleware
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-app.use('/', usersRouter);
-app.use('/resume', resumeRouter);
-
-app.use(logMiddleware);
-app.use(errorMiddleware);
-
+// Routes
 app.get('/', (req, res) => {
-  res.send('Hello world!!');
+  res.send('Hello World!');
 });
 
-connectPrisma();
-
 app.listen(PORT, () => {
-  console.log(`App is running at http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
